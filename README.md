@@ -2,18 +2,33 @@
 
 A couchdb query logger for couchdbkit using apache kafka
 
+External requirements (non-python):
+
+- postgres
+- kafka
+
 
 ## Quick Start
 
-### Install
+### Virtualenv
+
+Assuming you have virtualenv installed
 
 ```bash
-$ createdb couchpulse
-$ psql couchpulse
+mkvirtualenv couchpulse
+pip install -r requirements.txt
+export PYTHONPATH=`pwd`
+```
+
+### Postgres setup
+Assuming you have postgres installed,
+
+```bash
+createdb couchpulse
+psql couchpulse
 > CREATE EXTENSION IF NOT EXISTS hstore;
 > \q
-$ export PYTHONPATH=`pwd`
-$ alembic upgrade head
+alembic upgrade head
 ```
 
 ### Start up Kafka
