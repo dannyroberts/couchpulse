@@ -9,7 +9,19 @@ def query_stats(session, columns):
     )
 
 
-def recent_flagged_queries(since_time, max_time, max_size, like=None, limit=None, aggregate=True):
+def recent_flagged_queries(since_time, max_time, max_size, like=None,
+                           limit=None, aggregate=True):
+    """
+    since_time is a date; only couch queries after this date will be counted
+    max_time is in seconds
+    max_size is in bytes
+    like is a 'like' string such as '%_design%'
+
+    If aggregate, then results are grouped by (method, path) and counted
+    otherwise `limit` entries are returned
+    (If aggregate then limit is not used.)
+
+    """
     session = sql.Session()
     if not aggregate:
         keys = (
