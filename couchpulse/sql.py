@@ -1,4 +1,3 @@
-import alembic
 from sqlalchemy import Column, String, create_engine, Integer, Float, DateTime
 from sqlalchemy.dialects.postgresql import HSTORE
 from sqlalchemy.ext.declarative import declarative_base
@@ -14,8 +13,8 @@ Session = sessionmaker(bind=engine)
 class RequestLog(Base):
     __tablename__ = 'requests'
     id = Column(String, primary_key=True)
-    path = Column(String)
     method = Column(String)
+    path = Column(String)
     params = Column(HSTORE)
     size = Column(Integer)
     time = Column(Float)
