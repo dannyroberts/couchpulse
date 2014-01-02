@@ -7,7 +7,6 @@ _filepath = os.path.join(
     '..',
     'alembic.ini'
 )
-print _filepath
 _parser.read(_filepath)
 
 SQLALCHEMY_URL = _parser.get('alembic', 'sqlalchemy.url')

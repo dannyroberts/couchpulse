@@ -40,7 +40,6 @@ _old_request = CouchdbResource.request
 def logging_request(self, method, path=None, payload=None, headers=None, **params):
     tracking_number = str(uuid.uuid4())
     full_path = self.uri.rstrip('/') + '/' + path.lstrip('/')
-    print full_path
     start_time = time.time()
     response = _old_request(
         self,
