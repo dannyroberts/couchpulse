@@ -1,4 +1,5 @@
 import json
+import logging
 import uuid
 from couchdbkit import CouchdbResource
 from couchdbkit.resource import CouchDBResponse, encode_params
@@ -7,9 +8,29 @@ from kafka.producer import SimpleProducer
 import time
 from couchpulse.models import RequestLog, ResponseLog
 
+# it's important that coucdhb continue to function when Kafka is down
+# If we ever get any exception dealing with Kafka, we assume it's down
+# and stop logging until this process is restarted
+KAFKA_IS_DOWN = False
 
-kafka_client = KafkaClient("localhost", 9092)
-kafka_producer = SimpleProducer(kafka_client, "couchpulse")
+try:
+    kafka_client = KafkaClient("localhost", 9092)
+    kafka_producer = SimpleProducer(kafka_client, "couchpulse")
+except Exception:
+    KAFKA_IS_DOWN = True
+    logging.exception('kafka client/producer could not be initialized. '
+                      'kafka is likely down')
+
+
+def kafka_send_message(message):
+    global KAFKA_IS_DOWN
+    if not KAFKA_IS_DOWN:
+        try:
+            kafka_producer.send_messages(json.dumps(message))
+        except Exception:
+            KAFKA_IS_DOWN = True
+            logging.exception('could not send messgage to kafka. '
+                              'kafka is likely down')
 
 
 class LoggingResponse(CouchDBResponse):
@@ -30,7 +51,7 @@ class LoggingResponse(CouchDBResponse):
             size=len(value),
             time=elapsed_time,
         ).to_json()
-        kafka_producer.send_messages(json.dumps(message))
+        kafka_send_message(message)
         return value
 
 
@@ -61,7 +82,8 @@ def logging_request(self, method, path=None, payload=None, headers=None, **param
         size=len(json.dumps(payload)) if payload else None,
         params=encode_params(params),
     ).to_json()
-    kafka_producer.send_messages(json.dumps(message))
+
+    kafka_send_message(message)
 
     # playin' it fast and loose!
     response._logging_info = (tracking_number, method, full_path)
