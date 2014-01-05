@@ -24,10 +24,9 @@ export PYTHONPATH=`pwd`
 Assuming you have postgres installed,
 
 ```bash
+# run db commands as db superuser
 createdb couchpulse
-psql couchpulse
-> CREATE EXTENSION IF NOT EXISTS hstore;
-> \q
+psql couchpulse -c 'CREATE EXTENSION IF NOT EXISTS hstore;'
 alembic upgrade head
 ```
 
