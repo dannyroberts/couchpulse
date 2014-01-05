@@ -20,6 +20,10 @@ try:
 except ImportError:
     pass
 else:
-    KAFKA_HOST = getattr(settings, 'KAFKA_HOST', KAFKA_HOST)
-    KAFKA_PORT = getattr(settings, 'KAFKA_PORT', KAFKA_PORT)
-    KAFKA_TOPIC = getattr(settings, 'KAFKA_TOPIC', KAFKA_TOPIC)
+    from django.core.exceptions import ImproperlyConfigured
+    try:
+        KAFKA_HOST = getattr(settings, 'KAFKA_HOST', KAFKA_HOST)
+        KAFKA_PORT = getattr(settings, 'KAFKA_PORT', KAFKA_PORT)
+        KAFKA_TOPIC = getattr(settings, 'KAFKA_TOPIC', KAFKA_TOPIC)
+    except ImproperlyConfigured:
+        pass
