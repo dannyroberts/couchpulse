@@ -8,8 +8,10 @@ from . import sql
 import time
 import sqlalchemy.exc
 
-kafka_client = KafkaClient("localhost", 9092)
-kafka_consumer = SimpleConsumer(kafka_client, 'couchpulse.logreader', "couchpulse", auto_commit=False)
+from couchpulse import settings
+
+kafka_client = KafkaClient(settings.KAFKA_HOST, settings.KAFKA_PORT)
+kafka_consumer = SimpleConsumer(kafka_client, 'couchpulse.logreader', settings.KAFKA_TOPIC, auto_commit=False)
 
 
 def consume():

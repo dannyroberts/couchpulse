@@ -7,6 +7,7 @@ from kafka.client import KafkaClient
 from kafka.producer import SimpleProducer
 import time
 from couchpulse.models import RequestLog, ResponseLog
+from couchpulse import settings
 
 # it's important that coucdhb continue to function when Kafka is down
 # If we ever get any exception dealing with Kafka, we assume it's down
@@ -14,8 +15,8 @@ from couchpulse.models import RequestLog, ResponseLog
 KAFKA_IS_DOWN = False
 
 try:
-    kafka_client = KafkaClient("localhost", 9092)
-    kafka_producer = SimpleProducer(kafka_client, "couchpulse")
+    kafka_client = KafkaClient(settings.KAFKA_HOST, settings.KAFKA_PORT)
+    kafka_producer = SimpleProducer(kafka_client, settings.KAFKA_TOPIC)
 except Exception:
     KAFKA_IS_DOWN = True
     logging.exception('kafka client/producer could not be initialized. '
