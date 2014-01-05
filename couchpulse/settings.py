@@ -1,4 +1,4 @@
-from ConfigParser import ConfigParser
+from ConfigParser import ConfigParser, NoSectionError
 import os
 
 _parser = ConfigParser()
@@ -9,7 +9,10 @@ _filepath = os.path.join(
 )
 _parser.read(_filepath)
 
-SQLALCHEMY_URL = _parser.get('alembic', 'sqlalchemy.url')
+try:
+    SQLALCHEMY_URL = _parser.get('alembic', 'sqlalchemy.url')
+except NoSectionError:
+    pass
 
 KAFKA_HOST = 'localhost'
 KAFKA_PORT = 9092
