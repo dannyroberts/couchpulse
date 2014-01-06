@@ -12,7 +12,7 @@ _parser.read(_filepath)
 try:
     SQLALCHEMY_URL = _parser.get('alembic', 'sqlalchemy.url')
 except NoSectionError:
-    pass
+    SQLALCHEMY_URL = None
 
 KAFKA_HOST = 'localhost'
 KAFKA_PORT = 9092
@@ -28,5 +28,7 @@ else:
         KAFKA_HOST = getattr(settings, 'KAFKA_HOST', KAFKA_HOST)
         KAFKA_PORT = getattr(settings, 'KAFKA_PORT', KAFKA_PORT)
         KAFKA_TOPIC = getattr(settings, 'KAFKA_TOPIC', KAFKA_TOPIC)
+        SQLALCHEMY_URL = getattr(settings, 'COUCHPULSE_DATABASE_URL',
+                                 SQLALCHEMY_URL)
     except (ImproperlyConfigured, ImportError):
         pass
