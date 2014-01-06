@@ -11,13 +11,13 @@ import sqlalchemy.exc
 from couchpulse import settings
 
 kafka_client = KafkaClient(settings.KAFKA_HOST, settings.KAFKA_PORT)
-kafka_consumer = SimpleConsumer(kafka_client, 'couchpulse.logreader', settings.KAFKA_TOPIC, auto_commit=False)
 
 
-def consume():
+def consume(kafka_consumer):
     session = sql.Session()
-    for message in kafka_consumer:
-        message = json.loads(message.message.value)
+    for kafka_message in kafka_consumer:
+        message = json.loads(kafka_message.message.value)
+        print kafka_message.offset,
         if not message.get('id'):
             print ('skipping')
             continue
@@ -47,9 +47,19 @@ def consume():
         except sqlalchemy.exc.IntegrityError:
             session.rollback()
     session.close()
+    return kafka_consumer.offsets
 
 
-def consume_forever():
+def consume_forever(offsets=None, cache=None):
+    kafka_consumer = SimpleConsumer(kafka_client, 'couchpulse.logreader', settings.KAFKA_TOPIC, auto_commit=False)
+    if cache and offsets is None:
+        offsets = cache.get('couchpulse.offsets')
+    if offsets:
+        print 'starting at offsets {0}'.format(offsets)
+        kafka_consumer.offsets = offsets
+        print kafka_consumer.offsets
     while True:
-        consume()
+        offsets = consume(kafka_consumer)
+        if cache and offsets:
+            cache.set('couchpulse.offsets', offsets)
         time.sleep(1)
