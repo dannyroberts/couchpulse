@@ -19,6 +19,7 @@ class RequestLog(Base):
     size = Column(Integer)
     time = Column(Float)
     timestamp = Column(DateTime, index=True)
+    traceback = Column(String)
 
 
 class ResponseLog(Base):

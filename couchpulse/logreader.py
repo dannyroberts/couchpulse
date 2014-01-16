@@ -32,6 +32,7 @@ def consume(kafka_consumer):
                 size=r.size,
                 time=r.time,
                 timestamp=datetime.datetime.utcfromtimestamp(r.timestamp),
+                traceback=r.traceback,
             ))
             print 'saving request %s (%s)' % (r.timestamp, r.id)
         elif type == 'response':

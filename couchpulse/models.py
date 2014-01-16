@@ -10,6 +10,7 @@ class RequestLog(JsonObject):
     size = IntegerProperty()
     time = FloatProperty()
     timestamp = FloatProperty()
+    traceback = StringProperty()
 
 
 class ResponseLog(JsonObject):
