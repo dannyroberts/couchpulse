@@ -70,30 +70,31 @@ def logging_request(self, method, path=None, payload=None, headers=None, **param
         **params
     )
     end_time = time.time()
-    try:
-        elapsed_time = end_time - start_time
-        tracking_number = str(uuid.uuid4())
-        full_path = self.uri.rstrip('/') + '/' + path.lstrip('/')
+    elapsed_time = end_time - start_time
+    size = len(json.dumps(payload)) if payload else None
+    if elapsed_time > settings.TIME_THRESHOLD or size > settings.SIZE_THRESHOLD:
+        try:
+            tracking_number = str(uuid.uuid4())
+            full_path = self.uri.rstrip('/') + '/' + path.lstrip('/')
 
-        message = RequestLog(
-            id=tracking_number,
-            method=method,
-            path=full_path,
-            time=elapsed_time,
-            timestamp=start_time,
-            size=len(json.dumps(payload)) if payload else None,
-            params=encode_params(params),
-        ).to_json()
+            message = RequestLog(
+                id=tracking_number,
+                method=method,
+                path=full_path,
+                time=elapsed_time,
+                timestamp=start_time,
+                size=size,
+                params=encode_params(params),
+            ).to_json()
 
-        kafka_send_message(message)
-    except Exception:
-        logging.exception('Error during couchpulse logging. Aborting.')
-        return response
-    else:
-        # playin' it fast and loose!
-        response._logging_info = (tracking_number, method, full_path)
-        response.__class__ = LoggingResponse
-        return response
+            kafka_send_message(message)
+        except Exception:
+            logging.exception('Error during couchpulse logging. Aborting.')
+        else:
+            # playin' it fast and loose!
+            response._logging_info = (tracking_number, method, full_path)
+            response.__class__ = LoggingResponse
+    return response
 
 
 def monkey_patch():

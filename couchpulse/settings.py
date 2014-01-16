@@ -18,6 +18,9 @@ KAFKA_HOST = 'localhost'
 KAFKA_PORT = 9092
 KAFKA_TOPIC = 'couchpulse'
 
+TIME_THRESHOLD = .500  # in seconds
+SIZE_THRESHOLD = 1000000  # in bytes
+
 try:
     from django.conf import settings
 except ImportError:
@@ -30,5 +33,10 @@ else:
         KAFKA_TOPIC = getattr(settings, 'KAFKA_TOPIC', KAFKA_TOPIC)
         SQLALCHEMY_URL = getattr(settings, 'COUCHPULSE_DATABASE_URL',
                                  SQLALCHEMY_URL)
+        TIME_THRESHOLD = getattr(settings, 'COUCHPULSE_TIME_THRESHOLD',
+                                 TIME_THRESHOLD)
+        SIZE_THRESHOLD = getattr(settings, 'COUCHPULSE_SIZE_THRESHOLD',
+                                 SIZE_THRESHOLD)
+
     except (ImproperlyConfigured, ImportError):
         pass
