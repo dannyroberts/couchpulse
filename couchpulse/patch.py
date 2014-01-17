@@ -1,5 +1,7 @@
+from cStringIO import StringIO
 import json
 import logging
+import traceback
 import uuid
 from couchdbkit import CouchdbResource
 from couchdbkit.resource import CouchDBResponse, encode_params
@@ -59,6 +61,28 @@ class LoggingResponse(CouchDBResponse):
 _old_request = CouchdbResource.request
 
 
+def get_traceback(limit):
+    f = StringIO()
+    traceback.print_stack(file=f, limit=15 + limit)
+    lines = f.getvalue().strip().split('\n')
+    count = 2
+    for line in reversed(lines[:-2 * count]):
+        if not line.lstrip().startswith("File"):
+            continue
+        elif '/restkit/' in line or '/couchdbkit/' in line:
+            count += 1
+        else:
+            break
+
+    end = -2 * count
+    start = -2 * (count + limit)
+
+    return "{traceback}\n[plus {skipped} other frames]".format(
+        traceback='\n'.join(lines[start:end]),
+        skipped=count,
+    )
+
+
 def logging_request(self, method, path=None, payload=None, headers=None, **params):
     start_time = time.time()
     response = _old_request(
@@ -74,6 +98,12 @@ def logging_request(self, method, path=None, payload=None, headers=None, **param
     size = len(json.dumps(payload)) if payload else None
     if elapsed_time > settings.TIME_THRESHOLD or size > settings.SIZE_THRESHOLD:
         try:
+            tb = get_traceback(limit=7)
+        except Exception:
+            logging.exception('Error retrieving traceback. Aborting.')
+            tb = None
+
+        try:
             tracking_number = str(uuid.uuid4())
             full_path = self.uri.rstrip('/') + '/' + path.lstrip('/')
 
@@ -85,6 +115,7 @@ def logging_request(self, method, path=None, payload=None, headers=None, **param
                 timestamp=start_time,
                 size=size,
                 params=encode_params(params),
+                traceback=tb,
             ).to_json()
 
             kafka_send_message(message)
