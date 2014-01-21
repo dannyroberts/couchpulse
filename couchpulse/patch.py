@@ -95,7 +95,12 @@ def logging_request(self, method, path=None, payload=None, headers=None, **param
     )
     end_time = time.time()
     elapsed_time = end_time - start_time
-    size = len(json.dumps(payload)) if payload else None
+    if isinstance(payload, str):
+        size = len(payload)
+    elif isinstance(payload, unicode):
+        size = len(payload.encode('utf-8'))
+    else:
+        size = len(json.dumps(payload)) if payload else None
     if elapsed_time > settings.TIME_THRESHOLD or size > settings.SIZE_THRESHOLD:
         try:
             tb = get_traceback(limit=7)
