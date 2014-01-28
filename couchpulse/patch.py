@@ -3,37 +3,18 @@ import json
 import logging
 import traceback
 import uuid
+import time
+
 from couchdbkit import CouchdbResource
 from couchdbkit.resource import CouchDBResponse, encode_params
-from kafka.client import KafkaClient
-from kafka.producer import SimpleProducer
-import time
-from couchpulse.models import RequestLog, ResponseLog
-from couchpulse import settings
 
-# it's important that coucdhb continue to function when Kafka is down
-# If we ever get any exception dealing with Kafka, we assume it's down
-# and stop logging until this process is restarted
-KAFKA_IS_DOWN = False
-
-try:
-    kafka_client = KafkaClient(settings.KAFKA_HOST, settings.KAFKA_PORT)
-    kafka_producer = SimpleProducer(kafka_client, settings.KAFKA_TOPIC)
-except Exception:
-    KAFKA_IS_DOWN = True
-    logging.exception('kafka client/producer could not be initialized. '
-                      'kafka is likely down')
+from . import settings
+from .models import RequestLog, ResponseLog
+from .logreader import consume_message
 
 
-def kafka_send_message(message):
-    global KAFKA_IS_DOWN
-    if not KAFKA_IS_DOWN:
-        try:
-            kafka_producer.send_messages(json.dumps(message))
-        except Exception:
-            KAFKA_IS_DOWN = True
-            logging.exception('could not send messgage to kafka. '
-                              'kafka is likely down')
+def send_message(message):
+    consume_message.delay(message)
 
 
 class LoggingResponse(CouchDBResponse):
@@ -54,11 +35,8 @@ class LoggingResponse(CouchDBResponse):
             size=len(value),
             time=elapsed_time,
         ).to_json()
-        kafka_send_message(message)
+        send_message(message)
         return value
-
-
-_old_request = CouchdbResource.request
 
 
 def get_traceback(limit):
@@ -81,6 +59,9 @@ def get_traceback(limit):
         traceback='\n'.join(lines[start:end]),
         skipped=count,
     )
+
+
+_old_request = CouchdbResource.request
 
 
 def logging_request(self, method, path=None, payload=None, headers=None, **params):
@@ -123,7 +104,7 @@ def logging_request(self, method, path=None, payload=None, headers=None, **param
                 traceback=tb,
             ).to_json()
 
-            kafka_send_message(message)
+            send_message(message)
         except Exception:
             logging.exception('Error during couchpulse logging. Aborting.')
         else:

@@ -1,11 +1,10 @@
 # couchpulse
 
-A couchdb query logger for couchdbkit using apache kafka
+A couchdb query logger for couchdbkit using celery and postgresql
 
 External requirements (non-python):
 
 - postgres
-- kafka
 
 
 ## Quick Start
@@ -30,14 +29,12 @@ psql couchpulse -c 'CREATE EXTENSION IF NOT EXISTS hstore;'
 alembic upgrade head
 ```
 
-### Start up Kafka
+### Start up Celery
 
-Download Kafka from http://kafka.apache.org/downloads.html (0.8.0+)
+If you're using this as part of a django project just run
 
 ```bash
-cd kafka/ # for me it was kafka_2.8.0-0.8.0/
-bin/zookeeper-server-start.sh config/zookeeper.properties > zookeeper.log &
-bin/kafka-server-start.sh config/server.properties > kafka-server.log &
+python manage.py celeryd
 ```
 
 ### Monkey Patch
@@ -51,15 +48,6 @@ couchpulse.monkey_patch()
 
 to your entry point.
 
-
-### Run the log reader
-
-To have couchpulse read your logs (as a separate process) and store them in
-postgres, run
-
-```bash
-python couchpulse.py readlogs
-```
 
 ## Example Data
 
